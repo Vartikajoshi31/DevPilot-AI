@@ -1,10 +1,37 @@
 export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  process.env.BACKEND_URL ||
-  (typeof window !== "undefined" ? "/api/v1" : "http://localhost:8000/api/v1");
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+
+export const WS_BASE_URL =
+  process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000/api/v1";
+
+export async function getAuthToken(): Promise<string | null> {
+  if (typeof window === "undefined") return null;
+  let token = localStorage.getItem("devpilot_token");
+  if (!token) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/demo-token`, { method: "POST" });
+      if (res.ok) {
+        const data = await res.json();
+        token = data.access_token;
+        if (token) {
+          localStorage.setItem("devpilot_token", token);
+          if (data.user) {
+            localStorage.setItem("devpilot_user", JSON.stringify(data.user));
+          }
+        }
+      }
+    } catch {
+      // Fallback silently if offline
+    }
+  }
+  return token;
+}
 
 export async function fetchApi(endpoint: string, options: RequestInit = {}) {
-  const token = typeof window !== "undefined" ? localStorage.getItem("devpilot_token") : null;
+  let token = typeof window !== "undefined" ? localStorage.getItem("devpilot_token") : null;
+  if (!token && typeof window !== "undefined") {
+    token = await getAuthToken();
+  }
   
   const headers: Record<string, string> = {
     "Content-Type": "application/json",

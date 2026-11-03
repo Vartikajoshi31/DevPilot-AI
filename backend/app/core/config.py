@@ -1,5 +1,8 @@
 import os
 
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+DEFAULT_DB_PATH = os.path.join(BASE_DIR, "devpilot.db").replace("\\", "/")
+
 class Settings:
     PROJECT_NAME: str = "DevPilot AI"
     VERSION: str = "1.0.0"
@@ -7,8 +10,8 @@ class Settings:
     SECRET_KEY: str = os.getenv("SECRET_KEY", "devpilot-super-secret-production-key-2026-safe-default")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
     
-    # Database (Default to SQLite async, support PostgreSQL via env)
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./devpilot.db")
+    # Canonical absolute SQLite path or PostgreSQL via env
+    DATABASE_URL: str = os.getenv("DATABASE_URL", f"sqlite+aiosqlite:///{DEFAULT_DB_PATH}")
     
     # AI Model API Keys
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")

@@ -1,17 +1,23 @@
 "use client";
 
+import { useState } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { TopNav } from "@/components/layout/TopNav";
 import { FileText, Sparkles } from "lucide-react";
 
 export default function DocumentationPage() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-[#090d16] text-slate-100 flex">
-      <Sidebar />
+      <Sidebar
+        mobileOpen={mobileMenuOpen}
+        onCloseMobile={() => setMobileMenuOpen(false)}
+      />
       <div className="flex-1 flex flex-col min-w-0">
-        <TopNav />
-        <main className="flex-1 p-6 space-y-6 ml-64 overflow-y-auto">
-          <div className="flex items-center justify-between">
+        <TopNav onToggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)} />
+        <main className="flex-1 p-4 sm:p-6 space-y-6 ml-0 md:ml-64 overflow-y-auto">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h1 className="text-xl font-bold text-slate-100 flex items-center gap-2">
                 <FileText className="h-5 w-5 text-indigo-400" />
@@ -19,7 +25,7 @@ export default function DocumentationPage() {
               </h1>
               <p className="text-xs text-slate-400 mt-0.5">Automated README updates, API reference docs & architecture guides</p>
             </div>
-            <button className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow-lg shadow-indigo-500/20 transition-colors">
+            <button className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow-lg shadow-indigo-500/20 transition-colors w-fit">
               <Sparkles className="h-3.5 w-3.5" />
               Generate Updated Documentation
             </button>

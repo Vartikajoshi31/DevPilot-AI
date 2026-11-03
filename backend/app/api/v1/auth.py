@@ -95,3 +95,27 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSessi
 @router.get("/me", response_model=UserOut)
 async def me(current_user: User = Depends(get_current_user)):
     return current_user
+
+@router.post("/demo-token", response_model=Token)
+async def demo_token(db: AsyncSession = Depends(get_db)):
+    user_query = await db.execute(select(User).where(User.email == "admin@devpilot.ai"))
+    user = user_query.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="Demo user not found. Please restart server to seed demo data.")
+
+    mem_query = await db.execute(select(Membership).where(Membership.user_id == user.id))
+    membership = mem_query.scalars().first()
+    org_id = membership.organization_id if membership else ""
+
+    access_token = create_access_token({"sub": user.id, "email": user.email})
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": {
+            "id": user.id,
+            "email": user.email,
+            "full_name": user.full_name,
+            "role": user.role,
+            "organization_id": org_id
+        }
+    }

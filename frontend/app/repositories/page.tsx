@@ -1,17 +1,23 @@
 "use client";
 
+import { useState } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { TopNav } from "@/components/layout/TopNav";
 import { GitBranch, RefreshCw, CheckCircle2 } from "lucide-react";
 
 export default function RepositoriesPage() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-[#090d16] text-slate-100 flex">
-      <Sidebar />
+      <Sidebar
+        mobileOpen={mobileMenuOpen}
+        onCloseMobile={() => setMobileMenuOpen(false)}
+      />
       <div className="flex-1 flex flex-col min-w-0">
-        <TopNav />
-        <main className="flex-1 p-6 space-y-6 ml-64 overflow-y-auto">
-          <div className="flex items-center justify-between">
+        <TopNav onToggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)} />
+        <main className="flex-1 p-4 sm:p-6 space-y-6 ml-0 md:ml-64 overflow-y-auto">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h1 className="text-xl font-bold text-slate-100 flex items-center gap-2">
                 <GitBranch className="h-5 w-5 text-indigo-400" />
@@ -19,7 +25,7 @@ export default function RepositoriesPage() {
               </h1>
               <p className="text-xs text-slate-400 mt-0.5">AST code parsing, metadata extraction & vector embeddings</p>
             </div>
-            <button className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold px-4 py-2 rounded-lg transition-colors">
+            <button className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold px-4 py-2 rounded-lg transition-colors w-fit">
               <RefreshCw className="h-3.5 w-3.5" />
               Re-Index AST Vector Database
             </button>

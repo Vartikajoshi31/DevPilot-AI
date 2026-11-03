@@ -7,7 +7,8 @@ from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db, AsyncSessionLocal
 from app.api.v1.auth import get_current_user
-from app.models.entities import User, AgentRun, AgentStep, AgentMessage, Approval
+from app.core.security import decode_access_token
+from app.models.entities import User, AgentRun, AgentStep, AgentMessage, Approval, Membership, Project
 from app.schemas.schemas import AgentRunCreate, AgentRunOut, ApprovalAction
 from app.agents.orchestrator import AgentOrchestrator
 
@@ -93,7 +94,11 @@ async def create_agent_run(
     return query.scalar_one()
 
 @router.get("/{run_id}", response_model=AgentRunOut)
-async def get_agent_run(run_id: str, db: AsyncSession = Depends(get_db)):
+async def get_agent_run(
+    run_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
     query = await db.execute(
         select(AgentRun)
         .options(
@@ -106,6 +111,17 @@ async def get_agent_run(run_id: str, db: AsyncSession = Depends(get_db)):
     run_obj = query.scalar_one_or_none()
     if not run_obj:
         raise HTTPException(status_code=404, detail="Agent run not found")
+
+    # Enforce multi-tenant access control
+    mem_query = await db.execute(select(Membership).where(Membership.user_id == current_user.id))
+    user_memberships = mem_query.scalars().all()
+    user_org_ids = [m.organization_id for m in user_memberships]
+
+    proj_query = await db.execute(select(Project).where(Project.id == run_obj.project_id))
+    project = proj_query.scalar_one_or_none()
+    if not project or project.organization_id not in user_org_ids:
+        raise HTTPException(status_code=403, detail="Access denied to this agent run")
+
     return run_obj
 
 @router.post("/approvals/{approval_id}/action")
@@ -144,7 +160,12 @@ async def resolve_approval(
     return {"status": "success", "approval_status": approval.status}
 
 @router.websocket("/{run_id}/ws")
-async def websocket_agent_stream(websocket: WebSocket, run_id: str):
+async def websocket_agent_stream(websocket: WebSocket, run_id: str, token: str = None):
+    if token:
+        payload = decode_access_token(token)
+        if not payload or "sub" not in payload:
+            await websocket.close(code=1008)
+            return
     await ws_manager.connect(run_id, websocket)
     try:
         while True:

@@ -1,16 +1,22 @@
 "use client";
 
+import { useState } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { TopNav } from "@/components/layout/TopNav";
 import { Settings, Key, ShieldCheck } from "lucide-react";
 
 export default function SettingsPage() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-[#090d16] text-slate-100 flex">
-      <Sidebar />
+      <Sidebar
+        mobileOpen={mobileMenuOpen}
+        onCloseMobile={() => setMobileMenuOpen(false)}
+      />
       <div className="flex-1 flex flex-col min-w-0">
-        <TopNav />
-        <main className="flex-1 p-6 space-y-6 ml-64 overflow-y-auto">
+        <TopNav onToggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)} />
+        <main className="flex-1 p-4 sm:p-6 space-y-6 ml-0 md:ml-64 overflow-y-auto">
           <div>
             <h1 className="text-xl font-bold text-slate-100 flex items-center gap-2">
               <Settings className="h-5 w-5 text-indigo-400" />
@@ -52,11 +58,17 @@ export default function SettingsPage() {
                   className="w-full bg-slate-950 border border-slate-800 text-xs px-3 py-2 rounded-lg text-slate-100 focus:outline-none focus:border-indigo-500"
                 />
               </div>
-            </div>
 
-            <button className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors shadow-lg shadow-indigo-500/20">
-              Save Application Settings
-            </button>
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => alert("Settings saved locally.")}
+                  className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow-lg shadow-indigo-500/20 transition-colors"
+                >
+                  Save Settings
+                </button>
+              </div>
+            </div>
           </div>
         </main>
       </div>

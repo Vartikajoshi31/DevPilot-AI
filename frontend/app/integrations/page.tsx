@@ -1,10 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { TopNav } from "@/components/layout/TopNav";
 import { Plug, GitBranch, Terminal, MessageSquare } from "lucide-react";
 
 export default function IntegrationsPage() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   const integrations = [
     { name: "GitHub Integration", desc: "OAuth 2.0, repository inspection, branch creation & Pull Request generation", status: "Connected", icon: GitBranch },
     { name: "MCP (Model Context Protocol)", desc: "Standard context provider protocol for tools and databases", status: "Active", icon: Terminal },
@@ -13,10 +16,13 @@ export default function IntegrationsPage() {
 
   return (
     <div className="min-h-screen bg-[#090d16] text-slate-100 flex">
-      <Sidebar />
+      <Sidebar
+        mobileOpen={mobileMenuOpen}
+        onCloseMobile={() => setMobileMenuOpen(false)}
+      />
       <div className="flex-1 flex flex-col min-w-0">
-        <TopNav />
-        <main className="flex-1 p-6 space-y-6 ml-64 overflow-y-auto">
+        <TopNav onToggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)} />
+        <main className="flex-1 p-4 sm:p-6 space-y-6 ml-0 md:ml-64 overflow-y-auto">
           <div>
             <h1 className="text-xl font-bold text-slate-100 flex items-center gap-2">
               <Plug className="h-5 w-5 text-indigo-400" />
@@ -25,7 +31,7 @@ export default function IntegrationsPage() {
             <p className="text-xs text-slate-400 mt-0.5">Manage external connections, MCP tool providers & notification channels</p>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {integrations.map((item, i) => {
               const Icon = item.icon;
               return (

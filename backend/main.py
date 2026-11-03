@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.core.database import engine, Base
+from app.core.seed import seed_demo_data
 from app.api.v1.router import api_v1_router
 # Import entities to ensure models register with Base metadata
 import app.models.entities
@@ -18,6 +19,9 @@ async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     logger.info("Database schema initialized successfully.")
+    
+    # Auto-seed demo dataset on startup
+    await seed_demo_data()
     yield
     logger.info("Shutting down DevPilot AI Backend.")
 
@@ -30,7 +34,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$|^https://.*\.vercel\.app$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

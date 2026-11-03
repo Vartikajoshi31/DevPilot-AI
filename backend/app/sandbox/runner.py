@@ -51,6 +51,10 @@ class SandboxRunner:
         
         # Prepare environment
         env = os.environ.copy()
+        python_bin_dir = os.path.dirname(sys.executable)
+        env["PATH"] = f"{python_bin_dir}{os.pathsep}{env.get('PATH', '')}"
+        current_pythonpath = env.get("PYTHONPATH", "")
+        env["PYTHONPATH"] = f"{workspace_path}{os.pathsep}{current_pythonpath}" if current_pythonpath else workspace_path
         if env_vars:
             env.update(env_vars)
 

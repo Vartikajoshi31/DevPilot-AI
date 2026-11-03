@@ -119,10 +119,22 @@ async def create_project(
     await db.refresh(project)
     return project
 
-@router.get("/{project_id}", response_model=ProjectOut)
-async def get_project(project_id: str, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
-    proj_query = await db.execute(select(Project).where(Project.id == project_id))
+async def verify_project_access(project_id: str, user: User, db: AsyncSession) -> Project:
+    mem_query = await db.execute(select(Membership).where(Membership.user_id == user.id))
+    user_memberships = mem_query.scalars().all()
+    user_org_ids = [m.organization_id for m in user_memberships]
+
+    proj_query = await db.execute(
+        select(Project).where(
+            Project.id == project_id,
+            Project.organization_id.in_(user_org_ids)
+        )
+    )
     proj = proj_query.scalar_one_or_none()
     if not proj:
-        raise HTTPException(status_code=404, detail="Project not found")
+        raise HTTPException(status_code=404, detail="Project not found or access denied")
     return proj
+
+@router.get("/{project_id}", response_model=ProjectOut)
+async def get_project(project_id: str, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    return await verify_project_access(project_id, current_user, db)

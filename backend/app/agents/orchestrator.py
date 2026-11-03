@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 import json
 import logging
@@ -207,7 +208,8 @@ class AuthService:
             agent_run.current_agent = "Test Agent"
             await db.commit()
 
-            test_exec = await SandboxRunner.execute_command("pytest", workspace_path, timeout_seconds=20)
+            test_cmd = f'"{sys.executable}" -m pytest'
+            test_exec = await SandboxRunner.execute_command(test_cmd, workspace_path, timeout_seconds=20)
             
             if test_exec["exit_code"] != 0 and state.debug_attempts < state.max_debug_attempts:
                 # Debug loop attempt
@@ -216,15 +218,19 @@ class AuthService:
                 await db.commit()
 
                 state.debug_attempts += 1
-                await log_step("Debug Agent", f"Debug Retry Loop Attempt {state.debug_attempts}", {"error": test_exec["stderr"]}, {"status": "Analyzing stack trace and adjusting patch"})
+                await log_step("Debug Agent", f"Debug Retry Loop Attempt {state.debug_attempts}", {"error": test_exec["stderr"] or test_exec["stdout"]}, {"status": "Analyzing stack trace and adjusting patch"})
                 await log_message("Debug Agent", f"Attempt {state.debug_attempts} failed. Re-analyzing stack trace...", "error")
                 
                 # Re-run test after adjustment
-                test_exec = await SandboxRunner.execute_command("pytest", workspace_path, timeout_seconds=20)
+                test_exec = await SandboxRunner.execute_command(test_cmd, workspace_path, timeout_seconds=20)
 
             state.test_results = test_exec
-            await log_step("Test Agent", "Execute Pytest Suite", {"command": "pytest"}, {"exit_code": test_exec["exit_code"], "stdout": test_exec["stdout"]})
-            await log_message("Test Agent", "pytest test suite executed: All 3 tests PASSED (100% pass rate).", "info")
+            if test_exec["exit_code"] == 0:
+                await log_step("Test Agent", "Execute Pytest Suite", {"command": test_cmd}, {"exit_code": 0, "stdout": test_exec["stdout"]})
+                await log_message("Test Agent", "pytest test suite executed: All tests PASSED (100% pass rate).", "info")
+            else:
+                await log_step("Test Agent", "Execute Pytest Suite", {"command": test_cmd}, {"exit_code": test_exec["exit_code"], "stderr": test_exec["stderr"]})
+                await log_message("Test Agent", f"pytest execution completed with exit code {test_exec['exit_code']}.", "warning")
 
             # ------------------------------------------------------------------
             # STEP 5: SECURITY CHECK & REVIEW
@@ -258,6 +264,22 @@ class AuthService:
                 status="PENDING"
             )
             db.add(approval)
+            await db.flush()
+
+            # Record in AuditLog for compliance
+            audit = AuditLog(
+                project_id=state.project_id,
+                action="APPROVAL_GATE_REQUESTED",
+                resource_type="Approval",
+                resource_id=approval.id,
+                details_json={
+                    "run_id": run_id,
+                    "title": approval.title,
+                    "risk_level": approval.risk_level,
+                    "action_type": approval.action_type
+                }
+            )
+            db.add(audit)
             await db.commit()
 
             state.approval_required = True
