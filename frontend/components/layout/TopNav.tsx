@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Search, Command, Bell, Cpu, Menu, User } from "lucide-react";
+import { Search, Command, Bell, Cpu, Menu, User, Code2 } from "lucide-react";
 import { fetchApi } from "@/lib/api";
 
 interface TopNavProps {
@@ -101,6 +101,18 @@ export function TopNav({ onOpenCommandPalette, onToggleMobileMenu, onProjectChan
 
       {/* Right Controls */}
       <div className="flex items-center gap-3">
+        {/* Backend API Swagger Docs link */}
+        <a
+          href="/docs"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1.5 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 px-2.5 py-1 rounded-md text-xs font-medium transition-colors"
+        >
+          <Code2 className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">Backend API Docs</span>
+          <span className="sm:hidden">Docs</span>
+        </a>
+
         {/* Agent Status Badge */}
         <div className="hidden sm:flex items-center gap-2 bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-full text-xs">
           <Cpu className="h-3.5 w-3.5 text-indigo-400" />

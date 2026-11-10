@@ -6,6 +6,7 @@ __pycache__/
 
 # Builds
 .next/
+out/
 dist/
 build/
 *.db
